@@ -16,6 +16,7 @@ from waifuc.source import EmptySource, LocalSource, DanbooruSource
 
 from ..crawler import crawl_dataset_to_huggingface
 from ...utils import download_file, get_hf_fs, get_global_namespace
+from ...parquet_source import ParquetVideoSource
 
 
 @lru_cache()
@@ -53,6 +54,7 @@ def crawl_base_to_huggingface(
         repo_type: str = 'dataset', revision: str = 'main', path_in_repo: str = '.',
         skip_preprocess: bool = True, parallel: bool = True, standalone_ccip: bool = True,
         keep_cnt_ratio: bool = True, private: bool = False, db_tag: Optional[str] = None,
+        parquet_source: Optional[ParquetVideoSource] = None,
 ):
     ch_ids = [ch_id] if isinstance(ch_id, int) else ch_id
     source = EmptySource()
@@ -105,6 +107,9 @@ def crawl_base_to_huggingface(
                     RandomFilenameAction(ext='.png'),
                     TaggingAction(force=False, character_threshold=1.01),
                 )
+
+        if parquet_source:
+            source = source | parquet_source.create_source()
 
         return crawl_dataset_to_huggingface(
             source=source,
